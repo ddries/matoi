@@ -76,12 +76,20 @@ func recvLoop(recvChan *chan string) {
 	defer close(*recvChan)
 
 	for running {
-		_, message, err := conn.ReadMessage()
+		mType, message, err := conn.ReadMessage()	
 
-		if err != nil && verbose {
-			util.Verbose("ws", "error reading recv message")
+		if err != nil {
+			if verbose {
+				util.Verbose("ws", "error recv routine: " + err.Error())
+			}
+			*termChan <- true
+			break
 		} else {
-			*recvChan <- string(message)
+			if mType == websocket.TextMessage {
+				if len(message) > 0 {
+					*recvChan <- string(message)
+				}	
+			}
 		}
 	}
 }
